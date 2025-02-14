@@ -1,0 +1,5 @@
+<resources>
+    <string name="app_name">JuegoMemoria</string>
+    <string name="pistas">Pistas</string>
+    <string name="puntos">Puntos</string>
+</resources>
