@@ -1,6 +1,7 @@
 package com.merlita.juegomemoria;
 
 import static android.view.View.INVISIBLE;
+import static android.view.View.TEXT_ALIGNMENT_TEXT_START;
 import static android.view.View.VISIBLE;
 import static kotlinx.coroutines.DelayKt.delay;
 
@@ -41,7 +42,6 @@ public class MainActivity extends AppCompatActivity {
     final int FILAS = 2, COLUMNAS = 2;
     ArrayList<Integer> colores = new ArrayList<>();
     private int[] ids = new int[4];
-    private int giro=0;
     Intent upIntent;
 
 
@@ -52,6 +52,9 @@ public class MainActivity extends AppCompatActivity {
     int[] ordenJugador = new int[4];
     int numPulsados = 0;
     int pJugador=0, pMaquina=0;
+    boolean isJugando=false, isTiempoJugador=false,
+            isPistasEnabled=false;
+
 
 
 
@@ -69,7 +72,8 @@ public class MainActivity extends AppCompatActivity {
 
 
         p = new Point();
-        Display pantallaDisplay = getWindowManager().getDefaultDisplay();
+        Display pantallaDisplay = getWindowManager().
+                getDefaultDisplay();
         pantallaDisplay.getSize(p);
         anchoPantalla = p.x;
         altoPantalla = p.y;
@@ -80,48 +84,35 @@ public class MainActivity extends AppCompatActivity {
 
         añadirBotones();
 
-        /*
-        btJugar.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-
-            }
-        });*/
         btJugar.setOnClickListener(v -> {
-            new Handler(Looper.getMainLooper()).postDelayed(() -> {
-                hacerOrden();
+            if(!isJugando){
+                isJugando=true;
                 new Handler(Looper.getMainLooper()).postDelayed(() -> {
-                    hacerBlancos();
+                    hacerOrden();
                     new Handler(Looper.getMainLooper()).postDelayed(() -> {
-                        encender();
-                    }, 200);
-                }, 200);
-            }, 200);
+                        hacerBlancos();
+                        new Handler(Looper.getMainLooper()).postDelayed(() -> {
+                            encender();
+                        }, espera);
+                    }, espera);
+                }, espera);
+            }
         });
 
     }
-/*
-    public void jugar(View view) {
-        tv.setText("hola");
 
-        hacerOrden();
-        tarea1 = new hacerBlancos();
-
-
-        tarea2 = new encender();
-
-    }*/
     private void encender() {
         new Handler(Looper.getMainLooper()).postDelayed(() -> {
-            b1.setBackgroundColor(colores.get(0));
+            b1.setBackgroundColor(colores.get(orden[0]));
             new Handler(Looper.getMainLooper()).postDelayed(() -> {
-                b2.setBackgroundColor(colores.get(1));
+                b2.setBackgroundColor(colores.get(orden[1]));
                 new Handler(Looper.getMainLooper()).postDelayed(() -> {
-                    b3.setBackgroundColor(colores.get(2));
+                    b3.setBackgroundColor(colores.get(orden[2]));
                     new Handler(Looper.getMainLooper()).postDelayed(() -> {
-                        b4.setBackgroundColor(colores.get(3));
+                        b4.setBackgroundColor(colores.get(orden[3]));
                         new Handler(Looper.getMainLooper()).postDelayed(() -> {
                             hacerBlancos();
+                            isTiempoJugador=true;
                         }, espera);
                     }, espera);
                 }, espera);
@@ -153,7 +144,7 @@ public class MainActivity extends AppCompatActivity {
             }while(dichos.contains(numero));
             orden[i]=numero;
             dichos.add(numero);
-            ordenSt += numero;
+            ordenSt += (numero+1);
         }
         tv2.setText(ordenSt);
 
@@ -163,6 +154,7 @@ public class MainActivity extends AppCompatActivity {
         ViewGroup.LayoutParams lp =
                 new ViewGroup.LayoutParams(
                         anchoPantalla / COLUMNAS-30, altoPantalla / FILAS-400);
+        gridLayout.removeAllViews();
         gridLayout.setRowCount(2);
         gridLayout.setColumnCount(2);
 
@@ -178,18 +170,26 @@ public class MainActivity extends AppCompatActivity {
             b.setBackgroundColor(colores.get(i));
             ids[i] = ViewGroup.generateViewId();
             b.setId(ids[i]);
-            //b.setText(i+"");
+            if(isPistasEnabled)
+                b.setText((i+1)+"");
+            b.setTextSize(20);
+            b.setTextAlignment(TEXT_ALIGNMENT_TEXT_START);
             b.setOnClickListener(new View.OnClickListener(){
                 @Override
                 public void onClick(View v) {
-                    b.setBackgroundColor(colores.get(gridLayout.indexOfChild(b)));
+                    if(isJugando && isTiempoJugador){
+                        b.setBackgroundColor(colores.get(
+                                gridLayout.indexOfChild(b)));
 
-                    ordenJugador[numPulsados] = gridLayout.indexOfChild(b);
-                    numPulsados++;
+                        ordenJugador[numPulsados] = gridLayout.indexOfChild(b);
+                        numPulsados++;
 
-                    if(numPulsados==4){
-                        tv.setText(haGanado());
-                        numPulsados=0;
+                        if(numPulsados==4){
+                            tv.setText(haGanado());
+                            numPulsados=0;
+                            isTiempoJugador=false;
+                            isJugando=false;
+                        }
                     }
                 }
             });
@@ -220,10 +220,14 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void aprende(View view) {
-        if(tv2.getVisibility()==VISIBLE){
+        if(isPistasEnabled){
             tv2.setVisibility(INVISIBLE);
+            isPistasEnabled=false;
+            añadirBotones();
         }else{
             tv2.setVisibility(VISIBLE);
+            isPistasEnabled=true;
+            añadirBotones();
         }
     }
 }
